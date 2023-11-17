@@ -14,6 +14,8 @@ public class ClientHandler implements Runnable {
     private String username;
     private static final Map<String, ClientHandler> clients = new HashMap<>();
 
+    private static final Object lock = new Object();
+
     public ClientHandler(Socket clientSocket, int clientNumber) {
         this.clientSocket = clientSocket;
         this.clientNumber = clientNumber;
@@ -25,9 +27,11 @@ public class ClientHandler implements Runnable {
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-            out.println("Enter your username:");
+            out.println("Enter your UUUsername:");
             username = in.readLine();
-            clients.put(username, this);
+            synchronized (lock) {
+                clients.put(username, this);
+            }
 
             out.println("Hello, " + username + "! You are client #" + clientNumber + ".");
             broadcastMessage("Server: " + username + " has joined the chat.");
@@ -48,6 +52,11 @@ public class ClientHandler implements Runnable {
             System.out.println("Error handling client #" + clientNumber);
             System.out.println(e.getMessage());
         } finally {
+            synchronized (lock) {
+                if (username != null) {
+                    clients.remove(username);
+                }
+            }
             if (username != null) {
                 clients.remove(username);
             }
@@ -87,7 +96,9 @@ public class ClientHandler implements Runnable {
 
     private void broadcastMessage(String message) {
         for (ClientHandler client : clients.values()) {
-            client.out.println(message);
+            if (!client.equals(this)) {
+                client.out.println(message);
+            }
         }
     }
 
