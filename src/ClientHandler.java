@@ -1,22 +1,28 @@
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ClientHandler implements Runnable {
     private Socket clientSocket;
     private int clientNumber;
     private PrintWriter out;
     private BufferedReader in;
-    private String username;
-    private static final Map<String, ClientHandler> clients = new HashMap<>();
+    private String nickname;
 
-    public ClientHandler(Socket clientSocket, int clientNumber) {
+    private UserManager userManager;
+    private MessageHandler messageHandler;
+    private CommandParser commandParser;
+
+    public ClientHandler(Socket clientSocket, int clientNumber, UserManager userManager,
+            MessageHandler messageHandler) {
         this.clientSocket = clientSocket;
         this.clientNumber = clientNumber;
+        this.userManager = userManager;
+        this.messageHandler = messageHandler;
+        this.commandParser = new CommandParser(userManager, messageHandler);
     }
 
     @Override
@@ -25,78 +31,89 @@ public class ClientHandler implements Runnable {
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-            out.println("Enter your username:");
-            username = in.readLine();
-            clients.put(username, this);
-
-            out.println("Hello, " + username + "! You are client #" + clientNumber + ".");
-            broadcastMessage("Server: " + username + " has joined the chat.");
+            out.println("Hello! You are client #" + clientNumber + ".");
+            userManager.addClient(String.valueOf(clientNumber), this);
+            messageHandler.broadcastMessage("has joined the chat.", this);
 
             String input;
             while ((input = in.readLine()) != null) {
-                if (input.startsWith("/nick ")) {
-                    handleNickCommand(input);
-                } else if (input.startsWith("/dm ")) {
-                    handleDMCommand(input);
-                } else if (input.equals("/quit")) {
+                if (input.equalsIgnoreCase("/quit")) {
                     break;
-                } else {
-                    broadcastMessage(username + ": " + input);
                 }
+                commandParser.parseCommand(input, this);
             }
         } catch (IOException e) {
-            System.out.println("Error handling client #" + clientNumber);
-            System.out.println(e.getMessage());
+            handleClientDisconnection("Error with client #" + clientNumber + ": " + e.getMessage());
         } finally {
-            if (username != null) {
-                clients.remove(username);
+            cleanupClient();
+        }
+    }
+
+    public void sendMessage(String message) {
+        try {
+            out.println(message);
+        } catch (Exception e) {
+            System.out.println("Error sending message to client #" + clientNumber + ": " + e.getMessage());
+        }
+    }
+
+    public String getDisplayName() {
+        // Use nickname if set, otherwise use "Client #<clientNumber>"
+        return (nickname != null && !nickname.isEmpty()) ? nickname : "Client #" + clientNumber;
+    }
+
+    public void setNickname(String newNickname) {
+        if (newNickname == null || newNickname.trim().isEmpty()) {
+            return;
+        }
+        this.nickname = newNickname.trim();
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    private void closeStreamsAndConnection() {
+        if (out != null) {
+            out.close();
+        }
+        try {
+            if (in != null) {
+                in.close();
             }
-            try {
+        } catch (IOException e) {
+            System.out.println("Error closing input stream for client #" + clientNumber + ": " + e.getMessage());
+        }
+        closeConnection();
+    }
+
+    private void closeConnection() {
+        try {
+            if (clientSocket != null && !clientSocket.isClosed()) {
                 clientSocket.close();
-            } catch (IOException e) {
-                System.out.println("Couldn't close a socket, what's going on?");
-                System.out.println(e.getMessage());
             }
-            System.out.println("Connection with client #" + clientNumber + " closed");
+        } catch (IOException e) {
+            System.out.println("Error closing socket for client #" + clientNumber + ": " + e.getMessage());
         }
     }
 
-    private void handleNickCommand(String input) {
-        String[] parts = input.split(" ", 2);
-        if (parts.length == 2) {
-            String newNickname = parts[1];
-            clients.remove(username);
-            username = newNickname;
-            clients.put(username, this);
-            out.println("Your nickname is now set to " + username);
-        } else {
-            out.println("Invalid /nick command format");
+    private void cleanupClient() {
+        String displayName = getDisplayName();
+        if (displayName != null && !displayName.isEmpty()) {
+            messageHandler.broadcastMessage("has left the chat.", this);
+        }
+
+        userManager.removeClient(displayName);
+        closeStreamsAndConnection();
+        System.out.println(displayName + " has disconnected.");
+        System.out.println("Waiting for client connection...");
+    }
+
+    private void handleClientDisconnection(String errorMessage) {
+        System.out.println(errorMessage);
+        if (getDisplayName() != null && !getDisplayName().isEmpty()) {
+            messageHandler.broadcastMessage(getDisplayName() + " has been disconnected.", this);
         }
     }
 
-    private void handleDMCommand(String input) {
-        String[] parts = input.split(" ", 3);
-        if (parts.length == 3) {
-            String recipient = parts[1];
-            String message = parts[2];
-            sendDirectMessage(username, recipient, message);
-        } else {
-            out.println("Invalid /dm command format");
-        }
-    }
-
-    private void broadcastMessage(String message) {
-        for (ClientHandler client : clients.values()) {
-            client.out.println(message);
-        }
-    }
-
-    private void sendDirectMessage(String sender, String recipient, String message) {
-        ClientHandler receiver = clients.get(recipient);
-        if (receiver != null) {
-            receiver.out.println(sender + " (DM): " + message);
-        } else {
-            out.println("The user " + recipient + " is not online.");
-        }
-    }
 }
