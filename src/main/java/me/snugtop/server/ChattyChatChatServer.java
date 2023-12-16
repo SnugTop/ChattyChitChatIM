@@ -1,3 +1,4 @@
+package me.snugtop.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;

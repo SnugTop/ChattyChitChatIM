@@ -1,3 +1,5 @@
+package me.snugtop.server;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -36,7 +38,7 @@ public class ClientHandler implements Runnable {
      *                       broadcasting.
      */
     public ClientHandler(Socket clientSocket, int clientNumber, UserManager userManager,
-            MessageHandler messageHandler) {
+                         MessageHandler messageHandler) {
         this.clientSocket = clientSocket;
         this.clientNumber = clientNumber;
         this.userManager = userManager;
@@ -84,12 +86,12 @@ public class ClientHandler implements Runnable {
     /**
      * Returns the display name for the client. If the client has set a nickname,
      * the nickname is returned. Otherwise, the client number is returned.
-     * 
+     *
      * This was I decided to not use the nickname as the key for the client in the
      * UserManager, since the nickname can be changed. As well as not force the
      * client
      * to have a nickname.
-     * 
+     *
      * @return
      */
     public String getDisplayName() {
