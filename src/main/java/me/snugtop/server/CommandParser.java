@@ -1,3 +1,5 @@
+package me.snugtop.server;
+
 /**
  * The {@code CommandParser} class is responsible for parsing and handling
  * commands

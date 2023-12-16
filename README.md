@@ -1,18 +1,24 @@
-## Getting Started
+# Chitty Chit Chat IM
 
-Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
+## Maven
+This repo uses Maven convention over configuration patterns. For more info, please 
+visit the Maven [docs](https://books.sonatype.com/mvnref-book/reference/installation-sect-conventionConfiguration.html#:~:text=Convention%20over%20configuration%20is%20a,systems%20should%20%22just%20work%22).
 
-## Folder Structure
+## Usage
+### Build
+Compile the code and package into a jar file.
+```sh
+make build
+```
 
-The workspace contains two folders by default, where:
+### Run the Server
+Open a terminal in the directory of this repo, then run the following:
+```sh
+make run-server
+```
 
-- `src`: the folder to maintain sources
-- `lib`: the folder to maintain dependencies
-
-Meanwhile, the compiled output files will be generated in the `bin` folder by default.
-
-> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
-
-## Dependency Management
-
-The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).
+### Run the Client
+Open a terminal in the directory of this repo, then run the following:
+```sh
+make run-client
+```

@@ -1,3 +1,5 @@
+package me.snugtop.client;
+
 import java.net.Socket;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -11,7 +13,7 @@ import java.io.BufferedReader;
  * input from the
  * console and sends it to the server, and also listens for and displays
  * messages from the server.
- * 
+ *
  */
 public class ChattyChatChatClient {
 
@@ -35,9 +37,9 @@ public class ChattyChatChatClient {
         int port = Integer.parseInt(args[1]);
 
         try (Socket server = new Socket(host, port);
-                PrintWriter out = new PrintWriter(server.getOutputStream(), true);
-                BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-                BufferedReader in = new BufferedReader(new InputStreamReader(server.getInputStream()))) {
+            PrintWriter out = new PrintWriter(server.getOutputStream(), true);
+            BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+            BufferedReader in = new BufferedReader(new InputStreamReader(server.getInputStream()))) {
 
             System.out.println("Connected to server at " + host + ":" + port);
 

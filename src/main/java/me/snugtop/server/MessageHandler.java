@@ -1,3 +1,5 @@
+package me.snugtop.server;
+
 import java.util.List;
 
 /**

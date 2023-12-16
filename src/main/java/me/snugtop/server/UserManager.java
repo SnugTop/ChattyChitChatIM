@@ -1,19 +1,21 @@
+package me.snugtop.server;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 
+ *
  * Manages the users connected to the ChattyChatChat server. This class is
  * designed to be thread-safe,
  * using concurrent collections and synchronized blocks to manage client
  * information safely in a multi-threaded environment.
- * 
+ *
  * The main data structures used are:
  * - A ConcurrentHashMap for clients, allowing thread-safe operations on client
  * details.
  * - Another ConcurrentHashMap for nicknames, mapping nicknames to lists of
  * ClientHandlers.
- * 
+ *
  * Where concurrent collections alone are not sufficient to ensure atomicity of
  * operations,
  * synchronized blocks are used to guard complex operations on these
